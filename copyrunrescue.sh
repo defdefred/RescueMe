@@ -1,17 +1,18 @@
+set -e
 mkdir iso
 mkdir tmp
-mkdir iso/boot
-mkdir tmp/iso
+mkdir -p iso/boot/grub
+mkdir -p tmp/iso
 
-find /boot > tmp/boot.lst
-cpio -o < tmp/boot.lst | cpio -i  --no-absolute-filenames -D iso
 UNAMER=$(uname -r)
 cp /boot/vmlinuz-${UNAMER} iso/boot/
+
 EARLY_CPIO=$(cpio -t < /boot/initramfs-${UNAMER}.img 2>&1 | egrep '^[0-9]+ blocks' | cut -d \  -f 1)
 dd if=/boot/initramfs-${UNAMER}.img of=tmp/initramfs-${UNAMER}.img.gz bs=512 skip=$EARLY_CPIO
 dd if=/boot/initramfs-${UNAMER}.img of=iso/boot/initramfs-${UNAMER}.img bs=512 count=$EARLY_CPIO
 
 gzip -t tmp/initramfs-${UNAMER}.img.gz && gzip -dc tmp/initramfs-${UNAMER}.img.gz | cpio -i --no-absolute-filenames -D tmp/iso
+
 cat > tmp/iso/init << EOT
 #!/bin/sh
 mount -t devtmpfs none /dev
@@ -49,6 +50,36 @@ find . -print0 | cpio --null -ov --format=newc | gzip -9 > ../initramfs-${UNAMER
 cd ../..
 # concat with the early initramfs
 cat tmp/initramfs-${UNAMER}.img.gz >> iso/boot/initramfs-${UNAMER}.img
+
+# set grub.conf
+cat > iso/boot/grub/grub.conf << EOT
+set default=0
+set timeout=10
+EOT
+
+if [ -r /sys/firmware/efi ]
+then
+  cat >> iso/boot/grub/grub.conf << EOT
+insmod efi_gop
+insmod font
+if loadfont /boot/grub/fonts/unicode.pf2
+then
+        insmod gfxterm
+        set gfxmode=auto
+        set gfxpayload=keep
+        terminal_output gfxterm
+fi
+EOT
+fi
+
+cat >> iso/boot/grub/grub.conf << EOT
+menuentry 'myos' --class os {
+    insmod gzio
+    insmod part_msdos
+    linux /boot/vmlinuz-${UNAMER}
+    initrd /boot/initramfs-${UNAMER}.img
+}
+EOT
 
 # build the rescue iso
 grub2-mkrescue -o rescue.iso iso
