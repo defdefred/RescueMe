@@ -17,7 +17,10 @@ Making a rescue iso from running Linux to backup exotic driver modules
 This server is using a unusual proprietary drivers for soft raid (LSI megasr)
 ## grub shell
 ```
-
+set boot=(cd)
+linux (cd)/boot/vmlinuz-4.18.0-147.8.1el.8_1.x86_64
+initrd (cd)/boot/initramfs-4.18.0-147.8.1el.8_1.x86_64
+boot
 ```
 ## modules
 ```
@@ -32,7 +35,7 @@ This server is using a unusual proprietary drivers for soft raid (LSI megasr)
 /usr/sbin/ip addr add 192.168.0.2/24 dev eth5
 /usr/sbin/ip route add default via 192.168.0.1
 
-
+/usr/sbin/modprobe ahci
 /usr/sbin/modprobe megasr
 
 ```
