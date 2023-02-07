@@ -5,7 +5,7 @@ INFO="\e[33m"
 SUCCESS="\e[32m"
 STD="\e[m"
 
-echo -e "${INFO}Working directory is $(pwd): [ENTER|Ctrl-C]?${STD}"
+echo -e "${INFO}Working directory is $(pwd): [ENTER|Ctrl-C]?${STD}" ; read
 mkdir iso
 mkdir tmp
 mkdir -p iso/boot/grub
@@ -18,40 +18,43 @@ cp /boot/vmlinuz-${UNAMER} iso/boot/
 EARLY_CPIO=$(cpio -t < /boot/initramfs-${UNAMER}.img 2>&1 | egrep '^[0-9]+ blocks' | cut -d \  -f 1)
 echo -e "${INFO}Expected initramfs is multi-part with cpu microcode, before $EARLY_CPIO blocks${STD}"
 echo -e "${INFO}  - Extracting early_cpio...${STD}"
-dd if=/boot/initramfs-${UNAMER}.img of=tmp/initramfs-${UNAMER}.img.gz bs=512 skip=$EARLY_CPIO
-echo -e "${INFO}  - Extracting compressed initramfs...${STD}"
 dd if=/boot/initramfs-${UNAMER}.img of=iso/boot/initramfs-${UNAMER}.img bs=512 count=$EARLY_CPIO
+echo -e "${INFO}  - Extracting compressed initramfs...${STD}"
+dd if=/boot/initramfs-${UNAMER}.img of=tmp/initramfs-${UNAMER}.img.gz bs=512 skip=$EARLY_CPIO
 
 echo -e "${INFO}Analyze initramfs${STD}"
 FOUND="NO"
-for TRY in gzip xz zstd
+set +e # Continue on Error
+for TRY in gloups xz zstd gzip
 do
-  if [ $FOUND == "NO" ]
+  if [ "$FOUND" == "NO" ]
   then
     echo -e "${INFO}  - $TRY?${STD}"
   else
     break;
   fi
-  if [ COMP=$(which $TRY 2>/dev/null) ]
+        COMP=$(which $TRY 2>/dev/null)
+  if [ "x$COMP" != "x" ]
   then
-    if [ $COMP -t tmp/initramfs-${UNAMER}.img.gz ]
+    $COMP -t tmp/initramfs-${UNAMER}.img.gz
+    if [ "$?" == "0" ]
     then
-      echo "${SUCCESS}YES - initramfs is $COMP compressed${STD}"    
+      echo -e "${SUCCESS}YES - initramfs is $COMP compressed${STD}"
       FOUND="YES"
     else
-      echo "${INFO}NOP - initramfs is not $COMP compressed${STD}"
+      echo -e "${INFO}NOP - initramfs is not $COMP compressed${STD}"
       COMP=""
     fi
-    else
-      echo -e "${ERROR}???  - $TRY not installed${STD}"
-    fi
+  else
+    echo -e "${ERROR}???  - $TRY not installed${STD}"
   fi
 done
+set -e # Quit on Error
 
 if [ "$FOUND" == "YES" ]
 then
   echo -e "${INFO}Uncompress/extract initramfs...${STD}"
-  gzip -dc tmp/initramfs-${UNAMER}.img.gz | cpio -i --no-absolute-filenames -D tmp/iso
+  ( cd tmp/iso ; cat ../initramfs-${UNAMER}.img.gz | $COMP -dc | cpio -V -i --no-absolute-filenames )
 else
   echo -e "${ERROR}Unable to uncompress/extract initramfs${STD}"
   file tmp/initramfs-${UNAMER}.img.gz
@@ -86,7 +89,7 @@ netstat -rn > netstatrn.txt
 lsmod > lsmod.txt
 
 echo -e "${INFO}Create the new initramfs${STD}"
-find . -print0 | cpio --null -ov --format=newc | gzip -9 > ../initramfs-${UNAMER}.img.gz
+find . -print0 | cpio --null -oV --format=newc | gzip -9 > ../initramfs-${UNAMER}.img.gz
 
 echo -e "${INFO}Concat with the early initramfs${STD}"
 cd ../..
@@ -123,4 +126,4 @@ menuentry 'myos' --class os {
 EOT
 
 echo -e "${INFO}Build the rescue iso${STD}"
-grub2-mkrescue -o rescue.iso iso
+grub2-mkrescue -o rescue.iso iso && echo -e "${SUCCESS}SUCCESS!${STD}"
