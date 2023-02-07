@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e # Quit on Error
 ERROR="\e[31m"
-INFO="\e[34m"
+INFO="\e[33m"
 SUCCESS="\e[32m"
 STD="\e[m"
 
