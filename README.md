@@ -9,6 +9,9 @@ Making a rescue iso from running Linux to backup exotic driver modules
 ## Disk
 /usr/sbin/modprobe vmw_pvscsi
 
+# Real UCS C220 M5SX example
+This server is using a unusual proprietary drivers for soft raid (LSI megasr)
+
 
 # Usefull links
 https://medium.com/@ThyCrow/compiling-the-linux-kernel-and-creating-a-bootable-iso-from-it-6afb8d23ba22
