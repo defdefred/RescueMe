@@ -17,6 +17,7 @@ boot
 
 ## Stupid VM example
 rescueme.iso is mounted via vmware virtual cdrom.
+(Stupid because VM have snapshots...)
 ### Network
 ```
 /usr/sbin/modprobe vmxnet3
