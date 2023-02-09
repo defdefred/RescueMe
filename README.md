@@ -1,5 +1,5 @@
 # RescueMe
-Making a rescueme.iso from running Linux to backup a server with exotic proprietary modules
+Making a rescueme.iso from running Linux to backup a server with exotic proprietary modules.
 
 ## Needed package
 ```
@@ -13,6 +13,15 @@ set boot=(cd)
 linux (cd)/boot/vmlinuz-4.18.0-147.8.1el.8_1.x86_64
 initrd (cd)/boot/initramfs-4.18.0-147.8.1el.8_1.x86_64
 boot
+```
+## How to
+### Backup
+```
+dd if=/dev/sda bs=4096 | /usr/bin/gzip -9 | ssh user@backupserver "dd of=targetserver.gz bs=4096" -o StrictHostKeyChecking=no
+```
+### Restore
+```
+ssh user@backupserver "dd if=targetserver.gz bs=4096" -o StrictHostKeyChecking=no | | /usr/bin/gunzip | dd of=/dev/sda bs=4096 
 ```
 
 ## Stupid VM example
@@ -29,8 +38,7 @@ rescueme.iso is mounted via vmware virtual cdrom.
 ```
 
 ## Real UCS C220 M5SX example
-This server is using a unusual proprietary drivers for soft raid (LSI megasr)
-rescueme.iso is mounted via CIMC KVM virtual dvd/cdrom.
+This server is using a unusual proprietary drivers for soft raid (LSI megasr). The rescueme.iso is mounted via CIMC KVM virtual dvd/cdrom.
 ### Network
 ```
 /usr/sbin/modprobe ixgbe
