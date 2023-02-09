@@ -70,7 +70,7 @@ mount -t devtmpfs none /dev
 mount -t proc none /proc
 mount -t sysfs none /sys
 echo "Welcome to RescueMe Linux!"
-exec /tools/bash
+exec /usr/bin/bash
 EOT
 chmod +x tmp/iso/init
 
