@@ -68,29 +68,27 @@ cat > tmp/iso/init << EOT
 mount -t devtmpfs none /dev
 mount -t proc none /proc
 mount -t sysfs none /sys
-echo "Welcome to your rescue Linux!"
+echo "Welcome to RescueMe Linux!"
 exec /tools/bash
 EOT
+chmod +x tmp/iso/init 
 
 echo -e "${INFO}Adding tools...${STD}"
 cd tmp/iso || exit 1
-mkdir tools
-cp $(which bash) tools
-cp $(which dash) tools
-cp $(which sh) tools
-cp $(which ldd) tools
-cp $(which lsblk) tools
-cp $(which lspci) tools
-cp $(which df) tools
-cp $(which dd) tools
-cp $(which ssh) tools
-# Adding missing ssh lib found with chroot ./tmp/iso and /usr/bin/ldd /usr/bin/ssh
-cp /usr/lib64/libfipscheck.so.1 lib64/
-cp /usr/lib64/libutil.so.1 lib64/
+for P in $(which ldd) $(which bash) $(which lsblk) $(which lspci) $(which df) $(which dd) $(which ssh)
+do
+  echo -e "${INFO}  - $P${STD}"
+  cp $P .$P
+  chroot ./ sh /usr/bin/ldd -u $P | while read LIB
+  do
+    echo -e "${INFO}    - $LIB${STD}"
+    find /usr -name "$LIB" -exec echo cp {} .{} \;
+  done 
+done
 
 echo -e "${INFO}Grabbing usefull info from running server${STD}"
 ip a > ipa.txt
-netstat -rn > netstatrn.txt
+ip route > iproute.txt
 lsmod > lsmod.txt
 
 echo -e "${INFO}Create the new initramfs${STD}"
@@ -131,4 +129,4 @@ menuentry 'myos' --class os {
 EOT
 
 echo -e "${INFO}Build the rescue iso${STD}"
-grub2-mkrescue -o rescueme.iso iso && echo -e "${SUCCESS}SUCCESS!${STD}"
+grub-mkrescue -o rescueme.iso iso && echo -e "${SUCCESS}SUCCESS!${STD}"
