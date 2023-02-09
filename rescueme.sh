@@ -5,7 +5,8 @@ INFO="\e[33m"
 SUCCESS="\e[32m"
 STD="\e[m"
 
-echo -e "${INFO}Working directory is $(pwd): [ENTER|Ctrl-C]?${STD}" ; read
+BASE=$(pwd)
+echo -e "${INFO}Working directory is $BASE: [ENTER|Ctrl-C]?${STD}" ; read
 mkdir iso
 mkdir tmp
 mkdir -p iso/boot/grub
@@ -15,8 +16,8 @@ UNAMER=$(uname -r)
 echo -e "${SUCCESS}Target is running kernel ${UNAMER}${STD}"
 cp /boot/vmlinuz-${UNAMER} iso/boot/vmlinuz
 
-INITRAMFS=$(ls -1 /boot/init*${UNAMER}* | tail -1)
-EARLY_CPIO=$(cpio -t < $INITRAMFS 2>&1 | egrep '^[0-9]+ blocks' || echo 0 | cut -d \  -f 1)
+INITRAMFS=$(ls -1rS /boot/init*${UNAMER}* | tail -1)
+EARLY_CPIO=$(cpio -t < $INITRAMFS 2>&1 | ( egrep '^[0-9]+ blocks' || echo 0 ) | cut -d \  -f 1)
 echo -e "${INFO}Expected initramfs is multi-part with cpu microcode, before $EARLY_CPIO blocks${STD}"
 echo -e "${INFO}  - Extracting early_cpio...${STD}"
 dd if=$INITRAMFS of=iso/boot/initramfs bs=512 count=$EARLY_CPIO
@@ -71,7 +72,7 @@ mount -t sysfs none /sys
 echo "Welcome to RescueMe Linux!"
 exec /tools/bash
 EOT
-chmod +x tmp/iso/init 
+chmod +x tmp/iso/init
 
 echo -e "${INFO}Adding tools...${STD}"
 cd tmp/iso || exit 1
@@ -79,11 +80,11 @@ for P in $(which ldd) $(which bash) $(which lsblk) $(which lspci) $(which df) $(
 do
   echo -e "${INFO}  - $P${STD}"
   cp $P .$P
-  chroot ./ sh /usr/bin/ldd -u $P | while read LIB
+  chroot ./ sh /usr/bin/ldd -u $P | fgrep -v '/' | while read LIB
   do
     echo -e "${INFO}    - $LIB${STD}"
     find /usr -name "$LIB" -exec echo cp {} .{} \;
-  done 
+  done
 done
 
 echo -e "${INFO}Grabbing usefull info from running server${STD}"
@@ -95,7 +96,7 @@ echo -e "${INFO}Create the new initramfs${STD}"
 find . -print0 | cpio --null -oV --format=newc | gzip -9 > ../initramfs.gz
 
 echo -e "${INFO}Concat with the early initramfs${STD}"
-cd ../..
+cd $BASE
 cat tmp/initramfs.gz >> iso/boot/initramfs
 
 echo -e "${INFO}Set grub.conf${STD}"
@@ -117,6 +118,13 @@ then
         terminal_output gfxterm
 fi
 EOT
+
+  cd /boot/efi
+  find . -print0 | cpio --null -oV --format=newc > $BASE/tmp/efi.img
+  cd $BASE/iso
+  cpio -i < $BASE/tmp/efi.img
+  cd $BASE
+
 fi
 
 cat >> iso/boot/grub/grub.conf << EOT
@@ -129,4 +137,6 @@ menuentry 'myos' --class os {
 EOT
 
 echo -e "${INFO}Build the rescue iso${STD}"
-grub-mkrescue -o rescueme.iso iso && echo -e "${SUCCESS}SUCCESS!${STD}"
+#GRUB=$(which grub-mkrescue 2>/dev/null || which grub2-mkrescue 2>/dev/null)
+#$GRUB -o rescueme.iso iso && echo -e "${SUCCESS}SUCCESS${STD}"
+grub2-mkimage -o rescume.img iso
