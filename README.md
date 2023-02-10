@@ -1,6 +1,9 @@
 # RescueMe
 Making a rescueme.iso from running Linux to backup a server with exotic proprietary modules.
 
+## TODO
+cat /proc/cmdline
+
 ## Needed package
 ```
 xorriso
