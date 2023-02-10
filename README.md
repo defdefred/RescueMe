@@ -98,3 +98,5 @@ rescueme.iso is "burn" to a usb disk via `dd`.
 # Usefull links
 https://medium.com/@ThyCrow/compiling-the-linux-kernel-and-creating-a-bootable-iso-from-it-6afb8d23ba22
 https://askubuntu.com/questions/1110651/how-to-produce-an-iso-image-that-boots-only-on-uefi/1111760#1111760
+https://askubuntu.com/questions/1289400/remaster-installation-image-for-ubuntu-20-10
+
