@@ -4,6 +4,17 @@ Making a rescueme.iso from running Linux to backup a server with exotic propriet
 ## TODO
 cat /proc/cmdline
 
+
+while read DEV reste ; do
+  EFI_DEV=$DEV
+done < <(lsblk -l -o NAME,FSTYPE,PARTLABEL | egrep "fat.+EFI")
+
+while read DEV SIZE USED FREE PERCENT MOUNT ; do
+  EFI_MOUNT=$MOUNT
+  EFI_USED=$USED
+done < <(df -ml /dev/$EFI_DEV | fgrep "/dev/$EFI_DEV ")
+
+
 ## Needed package
 ```
 xorriso
@@ -86,3 +97,4 @@ rescueme.iso is "burn" to a usb disk via `dd`.
 
 # Usefull links
 https://medium.com/@ThyCrow/compiling-the-linux-kernel-and-creating-a-bootable-iso-from-it-6afb8d23ba22
+https://askubuntu.com/questions/1110651/how-to-produce-an-iso-image-that-boots-only-on-uefi/1111760#1111760
