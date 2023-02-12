@@ -14,6 +14,30 @@ while read DEV SIZE USED FREE PERCENT MOUNT ; do
   EFI_USED=$USED
 done < <(df -ml /dev/$EFI_DEV | fgrep "/dev/$EFI_DEV ")
 
+truncate -s 64M rescume.img
+fdisk rescume.img 
+losetup -P -f --show rescume.img 
+mkfs.vfat /dev/loop1p1
+mount /dev/loop1p1 /mnt
+cp /boot/vmlinuz-6.1.0-3-amd64 /boot/initrd.img-6.1.0-3-amd64 /mnt
+mkdir -p /mnt/EFI/BOOT
+refind-install --usedefault /dev/loop1p1
+
+
+root@wize:~# fdisk rescume.img2 << EOT
+n
+p
+1
+
+
+t
+ef
+w
+EOT
+^C
+root@wize:~# losetup -P -f --show rescume.img2
+/dev/loop3
+root@wize:~# mkfs.vfat /dev/loop3p1
 
 ## Needed package
 ```
