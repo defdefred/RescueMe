@@ -1,9 +1,9 @@
 # RescueMe
-Making a rescueme.iso from running Linux to backup a server with exotic proprietary modules.
+Making a `rescueme.iso` (BIOS) or `rescume.img` (EFI) from running Linux to backup a server with exotic proprietary modules.
+To be used on the same hardware!
 
 ## TODO
 cat /proc/cmdline
-
 
 while read DEV reste ; do
   EFI_DEV=$DEV
@@ -44,10 +44,11 @@ pour ssh
 rm /dev/tty
 ln -s /dev/console /dev/tty
 
-## Needed package
+## Needed package for BIOS boot
 ```
 xorriso
 ```
+
 ## Grub.cfg
 Automatic boot is not working yet, so you have to use:
 ### grub shell
@@ -67,9 +68,15 @@ dd if=/dev/sda bs=4096 | /usr/bin/gzip -9 | ssh user@backupserver "dd of=targets
 ssh user@backupserver "dd if=targetserver.gz bs=4096" -o StrictHostKeyChecking=no | | /usr/bin/gunzip | dd of=/dev/sda bs=4096 
 ```
 
-## Stupid VM example
-rescueme.iso is mounted via vmware virtual cdrom.
-(Stupid because VM have snapshots...)
+## VM example (BIOS and EFI)
+`rescueme.iso` is mounted via vmware virtual cdrom OR `rescume.img` is converted to `vmdk` and added to a newly created VM config.
+
+### dd -> vmdk convertion
+You can use `qemu-img` to convert the raw `dd` disk image.
+```
+$ qemu-img convert -pO vmdk ./rescueme.img ./rescueme.vmdk
+    (100.00/100%)
+```
 ### Network
 ```
 /usr/sbin/modprobe vmxnet3
