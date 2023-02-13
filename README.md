@@ -93,8 +93,8 @@ This server is using a unusual proprietary drivers for soft raid (LSI megasr). T
 
 ### Disk
 ```
-/usr/sbin/modprobe ahci
 /usr/sbin/modprobe megasr
+/usr/sbin/modprobe sd_mod
 ```
 
 ## Real Wize thih client
