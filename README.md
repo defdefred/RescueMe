@@ -39,6 +39,11 @@ root@wize:~# losetup -P -f --show rescume.img2
 /dev/loop3
 root@wize:~# mkfs.vfat /dev/loop3p1
 
+
+pour ssh
+rm /dev/tty
+ln -s /dev/console /dev/tty
+
 ## Needed package
 ```
 xorriso
