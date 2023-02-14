@@ -74,6 +74,7 @@ cat > tmp/iso/init << EOT
 mount -t devtmpfs none /dev
 mount -t proc none /proc
 mount -t sysfs none /sys
+echo 1 > /proc/sys/kernel/sysrq
 rm -f /dev/tty
 ln -s /dev/console /dev/tty
 echo "Welcome to RescueMe Linux!"
