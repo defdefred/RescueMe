@@ -7,23 +7,29 @@ To be used on the same hardware!
 xorriso
 ```
 
-## Grub.cfg
+## Bootloading
 Automatic boot is not working yet, so you have to use:
-### grub shell
+### EFI shell 
 ```
-set boot=(cd)
-linux (cd)/boot/vmlinuz-4.18.0-147.8.1el.8_1.x86_64
-initrd (cd)/boot/initramfs-4.18.0-147.8.1el.8_1.x86_64
+
+```
+### grub shell ( 'c' keystroke )
+```
+linux (cd)/boot/vmlinuz
+initrd (cd)/boot/initramfs
 boot
 ```
 ## How to
+### prepare some command for later
+If existing, a `setup.sh` script will be included in the initramfs.
+
 ### Backup
 ```
-dd if=/dev/sda bs=4096 | /usr/bin/gzip -9 | ssh user@backupserver "dd of=targetserver.gz bs=4096" -o StrictHostKeyChecking=no
+dd if=/dev/sdXY bs=4096 | /usr/bin/gzip -9 | ssh -o StrictHostKeyChecking=no user@backupserver "dd of=targetserver.gz bs=4096"
 ```
 ### Restore
 ```
-ssh user@backupserver "dd if=targetserver.gz bs=4096" -o StrictHostKeyChecking=no | | /usr/bin/gunzip | dd of=/dev/sda bs=4096 
+ssh user@backupserver "dd if=targetserver.gz bs=4096" -o StrictHostKeyChecking=no | | /usr/bin/gunzip | dd of=/dev/sdXY bs=4096 
 ```
 
 ## VM example (BIOS and EFI)
@@ -46,7 +52,7 @@ $ qemu-img convert -pO vmdk ./rescueme.img ./rescueme.vmdk
 ```
 
 ## Real UCS C220 M5SX example
-This server is using a unusual proprietary drivers for soft raid (LSI megasr). The rescueme.iso is mounted via CIMC KVM virtual dvd/cdrom.
+This server is using a unusual proprietary drivers for soft raid (LSI megasr). The rescueme.img is mounted via CIMC KVM virtual disk.
 ### Network
 ```
 /usr/sbin/modprobe ixgbe
@@ -60,12 +66,30 @@ This server is using a unusual proprietary drivers for soft raid (LSI megasr). T
 /usr/sbin/ip addr add 192.168.0.2/24 dev eth2
 /usr/sbin/ip route add default via 192.168.0.1
 ```
-
 ### Disk
 ```
 /usr/sbin/modprobe megasr
 /usr/sbin/modprobe sd_mod
 ```
+### FS if you need to repair something
+```
+export PATH=$PATH:/usr/sbin
+lvm_scan
+lvm vgmknodes
+mkdir /new
+mount -t xfs /dev/rhel/root /new
+mount -t xfs /dev/sda2 /new/boot
+mount -t vfat /dev/sda1 /new/boot/efi
+mount -t xfs /dev/rhel/home /new/home
+chroot /new
+mount -t devtmpfs none /dev
+mount -t proc none /proc
+mount -t sysfs none /sys
+echo 1 > /proc/sys/kernel/sysrq
+rm -f /dev/tty
+ln -s /dev/console /dev/tty
+```
+https://access.redhat.com/solutions/32726 is helpfull to repair the grub.cfg
 
 ## Real Wize thih client
 rescueme.iso is "burn" to a usb disk via `dd`.
@@ -91,6 +115,4 @@ rescueme.iso is "burn" to a usb disk via `dd`.
 
 # Usefull links
 https://medium.com/@ThyCrow/compiling-the-linux-kernel-and-creating-a-bootable-iso-from-it-6afb8d23ba22
-https://askubuntu.com/questions/1110651/how-to-produce-an-iso-image-that-boots-only-on-uefi/1111760#1111760
-https://askubuntu.com/questions/1289400/remaster-installation-image-for-ubuntu-20-10
 
