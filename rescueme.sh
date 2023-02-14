@@ -74,6 +74,8 @@ cat > tmp/iso/init << EOT
 mount -t devtmpfs none /dev
 mount -t proc none /proc
 mount -t sysfs none /sys
+rm -f /dev/tty
+ln -s /dev/console /dev/tty
 echo "Welcome to RescueMe Linux!"
 exec /usr/bin/sh
 EOT
@@ -92,14 +94,11 @@ do
   done
 done
 
-echo "${INFO}Linknig /dev/tty to /dev/console${STD}"
-ln -s dev/console dev/tty
-ls -l dev/tty
-
 echo "${INFO}Adding setup.sh if existing${STD}"
 if [ -f $BASE/setup.sh ]
 then
   cp  $BASE/setup.sh .
+  chmod +x setup.sh
   echo "${SUCCESS}Ok${STD}"
 else
   echo "${ERROR}Not found${STD}"
