@@ -77,6 +77,7 @@ mount -t sysfs none /sys
 echo 1 > /proc/sys/kernel/sysrq
 rm -f /dev/tty
 ln -s /dev/console /dev/tty
+PATH=$PATH:/usr/sbin
 echo "Welcome to RescueMe Linux!"
 exec /usr/bin/sh
 EOT
