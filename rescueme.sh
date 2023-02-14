@@ -71,14 +71,16 @@ fi
 echo "${INFO}Overwrite init${STD}"
 cat > tmp/iso/init << EOT
 #!/bin/sh
+export PATH=$PATH:/usr/sbin
 mount -t devtmpfs none /dev
 mount -t proc none /proc
 mount -t sysfs none /sys
 echo 1 > /proc/sys/kernel/sysrq
 rm -f /dev/tty
 ln -s /dev/console /dev/tty
-PATH=$PATH:/usr/sbin
-echo "Welcome to RescueMe Linux!"
+echo "------------------------------"
+echo "| Welcome to RescueMe Linux! |"
+echo "------------------------------"
 exec /usr/bin/sh
 EOT
 chmod +x tmp/iso/init
