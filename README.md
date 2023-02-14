@@ -44,6 +44,35 @@ pour ssh
 rm /dev/tty
 ln -s /dev/console /dev/tty
 
+## pol01
+
+ 161  truncate -s 64M rescue.disk
+  162  fdisk rescue.disk
+  163  losetup -P -f --show rescue.disk
+  164  mkdir efi
+  165  mkdir boot
+  166  mount loop0p1 efi
+  167  pwd
+  168  ls -l
+  169  mount /dev/loop0p1 efi
+  170  mkfs.vfat /dev/loop0p1
+  171  mount
+  172  mount /boot
+  173  mount -v | grep /boot
+  174  systemctl stop netbackup
+  175  systemctl disable netbackup
+  176  mkfs.xfs /dev/loop0p2
+  177  mount /dev/loop0p2 boot
+  178  mount /dev/loop0p1 efi
+  179  df
+  180  cd /boot/efi
+  181  ls
+  182  tar cf - EFI | ( cd /root/efi ; tar xf - )
+  183  pwd
+  184  cd /root/efi
+  185  ls -l
+
+
 ## Needed package for BIOS boot
 ```
 xorriso
