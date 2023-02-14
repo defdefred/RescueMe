@@ -1,0 +1,87 @@
+  564    truncate -s ${DISK_SIZE}M out/rescueme.img
+  565    fdisk out/rescueme.img << EOT
+n
+p
+1
+
++${EFI_USED}M
+t
+ef
+n
+p
+2
+
+
+w
+EOT
+
+  566  cd /boot/efi
+  567  ls
+  568  cd EFI
+  569  ls
+  570  cd BOOT
+  571  ls
+  572  cd ..
+  573  cd redhat/
+  574  ls
+  575  ls -l
+  576  vi grub.cfg
+  577  cd
+  578  df
+  579  history
+  580  losetup -D
+  581  losetup -P -f --show out/rescueme.img
+  582  mkfs.vfat /dev/loop0p1
+  583   mkfs.ext2 /dev/loop0p2
+  584  history | grep mount
+  585  mount tmp/boot /dev/loop0p2
+  586  mount /dev/loop0p1 tmp/efi
+  587  cd /boot/efi
+  588  history | grep dd
+  589  history | grep tar
+  590  tar cf - . | ( cd $BASE/tmp/efi ; tar xfv - )
+  591  echo $BASE
+  592  BASE=/root
+  593  pwd
+  594   tar xfv /root/efi.tar
+  595  echo $BASE
+  596  pwd
+  597   tar cf - . | ( cd $BASE/tmp/efi ; tar xfv - )
+  598  cd
+  599  cd iso/boot
+  600   tar cf - . | ( cd $BASE/tmp/boot ; tar xfv - )
+  601  df
+  602  cd tmp
+  603  cd
+  604  cd tmp
+  605  ls -l
+  606  cd efi
+  607  ls
+  608  rm -r EFI
+  609  rm -rf EFI
+  610  cd ../boot
+  611  ls
+  612  rm -f *
+  613  rm -rf grub/
+  614  ls
+  615  cd ..
+  616  history | grep mount
+  617  mount /dev/loop0p1 tmp/efi
+  618  cd ..
+  619   mount /dev/loop0p1 tmp/efi
+  620  mount  /dev/loop0p2 tmp/boot
+  621  df
+  622  ls tmp/efi
+  623  ls tmp/boot
+  624  cd /boot/efi
+  625  history | grep tar
+  626   tar cf - . | ( cd $BASE/tmp/efi ; tar xfv - )
+  627  cd /root/iso/boot
+  628  ls
+  629  tar cf - . | ( cd $BASE/tmp/boot ; tar xfv - )
+  630  cd
+  631  umount tmp/boot
+  632  umount tmp/efi
+  633  ls -l out
+  634  cd
+  635  history > history.txt
