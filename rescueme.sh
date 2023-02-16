@@ -4,13 +4,14 @@ set -e # Quit on Error
 #INFO=""
 #SUCCESS=""
 #STD=""
-ERROR="^[[31m"
-INFO="^[[33m"
-SUCCESS="^[[32m"
-STD="^[[m"
+ESC=""
+ERROR="$ESC[31m"
+INFO="$ESC[33m"
+SUCCESS="$ESC[32m"
+STD="$ESC[m"
 
 BASE=$(pwd)
-echo "${INFO}Working directory is $BASE: [ENTER|Ctrl-C]?${STD}" ; read
+echo "${INFO}Working directory is $BASE: [ENTER|Ctrl-C]?${STD}" ; read -r WAIT
 mkdir iso
 mkdir tmp
 mkdir out
@@ -72,36 +73,42 @@ echo "${INFO}Overwrite init${STD}"
 cat > tmp/iso/init << EOT
 #!/bin/sh
 export PATH=$PATH:/usr/sbin
+mkdir -p /proc /sys
 mount -t devtmpfs none /dev
 mount -t proc none /proc
 mount -t sysfs none /sys
 echo 1 > /proc/sys/kernel/sysrq
 rm -f /dev/tty
 ln -s /dev/console /dev/tty
-echo "------------------------------"
+echo " ----------------------------"
 echo "| Welcome to RescueMe Linux! |"
-echo "------------------------------"
+echo " ----------------------------"
 exec /usr/bin/sh
 EOT
 chmod +x tmp/iso/init
 
 echo "${INFO}Adding tools...${STD}"
 cd tmp/iso || exit 1
-for P in $(which ldd) $(which bash) $(which lsblk) $(which lspci) $(which df) $(which dd) $(which ssh)  $(which chmod)
+for P in $(which ldd) $(which lsblk) $(which lspci) $(which df) $(which dd) $(which ssh)  $(which chmod)  $(which fuser) $(which bash) 
 do
-  echo "${INFO}  - $P${STD}"
-  cp "$P" ."$P"
-  chroot ./ sh /usr/bin/ldd -u "$P" | grep -Fv '/' | while read -r LIB
-  do
-    echo "${INFO}    - $LIB${STD}"
-    find /usr -name "$LIB" -exec cp {} .{} \;
-  done
+  if [ -r ."$P" ]
+  then
+    echo "${INFO}  - $P already present${STD}"
+  else  
+    echo "${INFO}  - $P coping...${STD}"
+    cp "$P" ."$P"
+    chroot ./ /usr/bin/sh /usr/bin/ldd -u "$P" | grep -Fv '/' | grep -Fv 'Unused' | while read -r LIB
+    do
+      echo "${INFO}    - $LIB${STD}"
+      find /usr -name "$LIB" -exec cp {} .{} \;
+    done
+  fi
 done
 
 echo "${INFO}Adding setup.sh if existing${STD}"
-if [ -f $BASE/setup.sh ]
+if [ -f "$BASE/setup.sh" ]
 then
-  cp  $BASE/setup.sh .
+  cp  "$BASE/setup.sh" .
   chmod +x setup.sh
   echo "${SUCCESS}Ok${STD}"
 else
@@ -124,14 +131,14 @@ cat tmp/initramfs.gz >> iso/boot/initramfs
 if [ -r /sys/firmware/efi ]
 then
   echo "${INFO}Analyse EFI${STD}"
-  read EFI_DEV reste << EOT
-$(lsblk -l -o NAME,FSTYPE,PARTLABEL | egrep "fat.+EFI")
+  read -r EFI_DEV reste << EOT
+$(lsblk -l -o NAME,FSTYPE,PARTLABEL | grep -E "fat.+EFI")
 EOT
-  read DEV SIZE EFI_USED FREE PERCENT EFI_MOUNT << EOT
+  read -r DEV SIZE EFI_USED FREE PERCENT EFI_MOUNT << EOT
 $(df -ml /dev/$EFI_DEV | fgrep "/dev/$EFI_DEV ")
 EOT
   echo "$EFI_MOUNT ($EFI_DEV) need ${EFI_USED}M"
-  read BOOT_USED reste << EOT
+  read -r BOOT_USED reste << EOT
 $(du -sm iso)
 EOT
   DISK_SIZE=$(( "$EFI_USED" + "$BOOT_USED" + 3 ))
