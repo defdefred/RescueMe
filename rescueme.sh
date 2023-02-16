@@ -89,12 +89,12 @@ chmod +x tmp/iso/init
 
 echo "${INFO}Adding tools...${STD}"
 cd tmp/iso || exit 1
-for P in $(which ldd) $(which lsblk) $(which lspci) $(which df) $(which dd) $(which ssh)  $(which chmod)  $(which fuser) $(which bash) 
+for P in $(which ldd) $(which lsblk) $(which lspci) $(which df) $(which dd) $(which ssh)  $(which chmod)  $(which fuser) $(which bash)
 do
   if [ -r ."$P" ]
   then
     echo "${INFO}  - $P already present${STD}"
-  else  
+  else
     echo "${INFO}  - $P coping...${STD}"
     cp "$P" ."$P"
     chroot ./ /usr/bin/sh /usr/bin/ldd -u "$P" | grep -Fv '/' | grep -Fv 'Unused' | while read -r LIB
@@ -128,6 +128,19 @@ echo "${INFO}Concat with the early initramfs${STD}"
 cd "$BASE"
 cat tmp/initramfs.gz >> iso/boot/initramfs
 
+echo "${INFO}Set grub.conf${STD}"
+cat > iso/boot/grub/grub.conf << EOT
+set default=0
+set timeout=10
+menuentry 'RescueMe' --class os {
+  savedefault
+  insmod gzio
+  insmod part_msdos
+  linux /boot/vmlinuz
+  initrd /boot/initramfs
+}
+EOT
+
 if [ -r /sys/firmware/efi ]
 then
   echo "${INFO}Analyse EFI${STD}"
@@ -137,14 +150,15 @@ EOT
   read -r DEV SIZE EFI_USED FREE PERCENT EFI_MOUNT << EOT
 $(df -ml /dev/$EFI_DEV | fgrep "/dev/$EFI_DEV ")
 EOT
-  echo "$EFI_MOUNT ($EFI_DEV) need ${EFI_USED}M"
+  echo "${INFO}$EFI_MOUNT ($EFI_DEV) need ${EFI_USED}M"${STD}
   read -r BOOT_USED reste << EOT
 $(du -sm iso)
 EOT
   DISK_SIZE=$(( "$EFI_USED" + "$BOOT_USED" + 3 ))
-  echo "Disk rescueme.img need ${DISK_SIZE}M"
+  echo "${INFO}Disk rescueme.img need ${DISK_SIZE}M${STD}"
+  echo "${INFO}  - Disk creation${STD}"
   truncate -s ${DISK_SIZE}M out/rescueme.img
-  fdisk out/rescueme.img << EOT
+  fdisk out/rescueme.img  >/dev/null << EOT
 n
 p
 1
@@ -159,21 +173,33 @@ p
 
 w
 EOT
-
-else
-  echo "${INFO}Set grub.conf${STD}"
-  cat > iso/boot/grub/grub.conf << EOT
-set default=0
-set timeout=10
-menuentry 'RescueMe' --class os {
-  savedefault
-  insmod gzio
-  insmod part_msdos
-  linux /boot/vmlinuz
-  initrd /boot/initramfs
-}
+  echo "${INFO}  - Formating partition${STD}"
+  read -r LOOP <<EOT
+$(losetup -P -f --show out/rescueme.img)
 EOT
+  mkfs.vfat "$LOOP"p1
+  mkfs.ext2 "$LOOP"p2
+  echo "${INFO}  - Mounting partition${STD}"
+  mkdir tmp/efi
+  mkdir tmp/boot
+  mount "$LOOP"p1 tmp/efi
+  mount "$LOOP"p2 tmp/boot
+  echo "${INFO}  - EFI duplication${STD}"
+  cd $EFI_MOUNT
+  tar cf - . | ( cd $BASE/tmp/efi ; tar xfv - )
+  cd $BASE
+  echo "${INFO}  - Kernel and Initramfs${STD}"
+  cd iso/boot
+  tar cf - . | ( cd $BASE/tmp/boot ; tar xfv - )
+  cd $BASE
+  echo "${INFO}  - Umounting partition${STD}"
+  umount tmp/efi
+  umount tmp/boot
+  losetup -D "$LOOP" && echo "${SUCCESS}SUCCESS${STD}"
+else
   echo "${INFO}Build the rescue iso${STD}"
   GRUB=$(which grub-mkrescue 2>/dev/null || which grub2-mkrescue 2>/dev/null)
   $GRUB -o out/rescueme.iso iso && echo "${SUCCESS}SUCCESS${STD}"
 fi
+
+echo "Please copy the result from "out" folder and remorvre the temporary files if not needed (rm -rf out iso tmp)"
