@@ -1,0 +1,91 @@
+[root@ucs ~]# rm -rf out tmp iso
+[root@ucs ~]# ./rescueme.sh
+Working directory is /root: [ENTER|Ctrl-C]?
+
+Target is running kernel 4.18.0-372.32.1.el8_6.x86_64
+Expected initramfs is multi-part with cpu microcode, before 76 blocks
+  - Extracting early_cpio...
+76+0 records in
+76+0 records out
+38912 bytes (39 kB, 38 KiB) copied, 0.00021846 s, 178 MB/s
+  - Extracting compressed initramfs...
+58017+1 records in
+58017+1 records out
+29705207 bytes (30 MB, 28 MiB) copied, 0.0722902 s, 411 MB/s
+Analyze initramfs
+  - xz?
+/usr/bin/xz: tmp/initramfs.gz: File format not recognized
+    - NOP initramfs is not /usr/bin/xz compressed
+  - zstd?
+    - ??? zstd not installed
+  - gzip?
+    - YES initramfs is /usr/bin/gzip compressed
+Uncompress/extract initramfs...
+........................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................
+126196 blocks
+Overwrite init
+Adding tools...
+  - /usr/bin/ldd coping...
+    - not a dynamic executable
+  - /usr/bin/lsblk coping...
+  - /usr/sbin/lspci coping...
+  - /usr/bin/df coping...
+  - /usr/bin/dd coping...
+  - /usr/bin/ssh coping...
+    - libutil.so.1
+  - /usr/bin/chmod coping...
+  - /usr/sbin/fuser coping...
+  - /usr/bin/bash already present
+Adding setup.sh if existing
+Ok
+Grabbing usefull info from running server
+Create the new initramfs
+......................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................
+125542 blocks
+Concat with the early initramfs
+Set grub.conf
+Analyse EFI
+/boot/efi (sda1) need 6M
+Disk rescueme.img need 52M
+  - Disk creation
+  - Formating partition
+mkfs.fat 4.1 (2017-01-24)
+mke2fs 1.45.6 (20-Mar-2020)
+Discarding device blocks: done
+Creating filesystem with 46080 1k blocks and 11520 inodes
+Filesystem UUID: 56427b68-a8d4-4bd7-99b0-ecd08ea5be76
+Superblock backups stored on blocks:
+        8193, 24577, 40961
+
+Allocating group tables: done
+Writing inode tables: done
+Writing superblocks and filesystem accounting information: done
+
+  - Mounting partition
+  - EFI duplication
+./
+./EFI/
+./EFI/BOOT/
+./EFI/BOOT/BOOTX64.EFI
+./EFI/BOOT/fbx64.efi
+./EFI/redhat/
+./EFI/redhat/shimx64-redhat.efi
+./EFI/redhat/BOOTX64.CSV
+./EFI/redhat/mmx64.efi
+./EFI/redhat/fonts/
+./EFI/redhat/grubx64.efi
+./EFI/redhat/grubenv
+./EFI/redhat/shimx64.efi
+./EFI/redhat/grub.cfg
+  - Kernel and Initramfs
+./
+./grub/
+./grub/grub.conf
+./vmlinuz
+./initramfs
+  - Umounting partition
+SUCCESS
+Please copy the result from out folder and remorvre the temporary files if not needed (rm -rf out iso tmp)
+[root@ucs ~]# ls -l out
+total 47136
+-rw-r--r--. 1 root root 54525952 Feb 16 16:09 rescueme.img
