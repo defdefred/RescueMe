@@ -1,5 +1,5 @@
 # RescueMe
-Making a `rescueme.iso` (BIOS with cdrom) or `rescume.img` (EFI with usb) from running Linux to backup a server with exotic proprietary modules.
+Making a `rescueme.iso` (BIOS with cdrom) or `rescueme.img` (EFI with usb) from running Linux to backup a server with exotic proprietary modules.
 To be used on the same hardware!
 
 ## Needed package for BIOS boot
@@ -7,39 +7,29 @@ To be used on the same hardware!
 xorriso
 ```
 
-## Bootloading
-Automatic boot is not working yet, so you have to use:
-### EFI shell 
-```
-
-```
-### grub shell ( 'c' keystroke )
-```
-linux (cd)/boot/vmlinuz
-initrd (cd)/boot/initramfs
-boot
-```
 ## How to
 ### prepare some command for later
 If existing, a `setup.sh` script will be included in the initramfs.
 
 ### Backup
 ```
-dd if=/dev/sdXY bs=4096 | /usr/bin/gzip -9 | ssh -o StrictHostKeyChecking=no user@backupserver "dd of=targetserver.gz bs=4096"
+dd if=/dev/sdXY bs=4096 | /usr/bin/gzip -9 \
+| ssh -o StrictHostKeyChecking=no user@backupserver "dd of=targetserver.gz bs=4096"
 ```
 ### Restore
 ```
-ssh user@backupserver "dd if=targetserver.gz bs=4096" -o StrictHostKeyChecking=no | | /usr/bin/gunzip | dd of=/dev/sdXY bs=4096 
+ssh user@backupserver "dd if=targetserver.gz bs=4096" -o StrictHostKeyChecking=no \
+| /usr/bin/gunzip | dd of=/dev/sdXY bs=4096 
 ```
 
-## VM example (BIOS and EFI)
-`rescueme.iso` is mounted via vmware virtual cdrom OR `rescume.img` is converted to `vmdk` and added to a newly created VM config.
-
-### dd -> vmdk convertion
-You can use `qemu-img` to convert the raw `dd` disk image.
+## VM example (BIOS)
+`rescueme.iso` is mounted via vmware virtual cdrom.
+### grub shell
 ```
-$ qemu-img convert -pO vmdk ./rescueme.img ./rescueme.vmdk
-    (100.00/100%)
+ls
+linux (cd)/boot/vmlinuz
+initrd (cd)/boot/initramfs
+boot
 ```
 ### Network
 ```
@@ -51,8 +41,53 @@ $ qemu-img convert -pO vmdk ./rescueme.img ./rescueme.vmdk
 /usr/sbin/modprobe vmw_pvscsi
 ```
 
-## Real UCS C220 M5SX example
+## VM example (EFI)
+`rescueme.img` is converted to `vmdk` and added to a newly created VM config.
+### dd -> vmdk convertion
+You can use `qemu-img` to convert the raw `dd` disk image.
+```
+$ qemu-img convert -pO vmdk ./rescueme.img ./rescueme.vmdk
+    (100.00/100%)
+```
+### Booting EFI shell 
+Starting grub
+```
+Shell> FS0:
+FS0:\> \efi\redhat\grubx64.efi
+```
+Starting Linux (goto Grub Shell with 'c' keystroke)
+```
+ls
+linux (hd0)/vmlinuz
+initrd (hd0)/initramfs
+boot
+```
+### Network
+```
+/usr/sbin/modprobe vmxnet3
+/usr/sbin/ip addr add 192.168.0.2/24 dev eth0
+```
+### Disk
+```
+/usr/sbin/modprobe vmw_pvscsi
+```
+
+## UCS C220 M5SX example
 This server is using a unusual proprietary drivers for soft raid (LSI megasr). The rescueme.img is mounted via CIMC KVM virtual disk.
+### Booting EFI shell 
+Starting grub
+```
+Shell> FS1:
+FS1:\> \efi\redhat\grubx64.efi
+```
+Starting Linux (goto Grub Shell with 'c' keystroke)
+```
+ls
+linux (hd2,msdos2)/vmlinuz
+initrd (hd2,msdos2)/initramfs
+boot
+
+```
 ### Network
 ```
 /usr/sbin/modprobe ixgbe
@@ -91,19 +126,19 @@ ln -s /dev/console /dev/tty
 ```
 https://access.redhat.com/solutions/32726 is helpfull to repair the grub.cfg
 
-## Real Wize thih client
-rescueme.iso is "burn" to a usb disk via `dd`.
+## Real Wize thin client
+rescueme.iso is written to a usb disk via `dd`.
+### grub shell
+```
+ls
+linux (hd0)/boot/vmlinuz
+initrd (hd0)/boot/initramfs
+boot
+```
 ### Network
 ```
-/usr/sbin/modprobe ixgbe
-/usr/sbin/modprobe mlx5_core
-/usr/sbin/ifup eth0 
-/usr/sbin/ifup eth1
-/usr/sbin/ifup eth2
-/usr/sbin/ifup eth3
-/usr/sbin/ifup eth4
-/usr/sbin/ifup eth5
-/usr/sbin/ip addr add 192.168.0.2/24 dev eth2
+/usr/sbin/ifup eth0
+/usr/sbin/ip addr add 192.168.0.2/24 dev eth0
 /usr/sbin/ip route add default via 192.168.0.1
 ```
 
