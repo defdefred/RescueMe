@@ -74,6 +74,9 @@ boot
 
 ## UCS C220 M5SX example
 This server is using a unusual proprietary drivers for soft raid (LSI megasr). The rescueme.img is mounted via CIMC KVM virtual disk.
+### RescueMe disk image creation
+The result could be find [here](https://github.com/defdefred/RescueMe/blob/main/output_UCS_C220_M5SX.txt).
+
 ### Booting EFI shell 
 Starting grub
 ```
